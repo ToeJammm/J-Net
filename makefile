@@ -1,19 +1,36 @@
-# Makefile
+# Compiler and flags
+CXX      = clang++
+CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic \
+           -I./include -I./sciplot
 
-CXX = clang++
-CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -I./sciplot
+# Directories
+SRCDIR = src
+OBJDIR = obj
+BINDIR = .
 
-# List all object files
-OBJECTS = main.o ForwardNeuralNetwork.o DataPreprocessing.o
+# Executable name
+TARGET = neural_network
 
-# Define the executable target
-neural_network: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) -o neural_network $(OBJECTS)
+# List your source files (only the .cpp filenames, no path)
+SOURCES = main.cpp \
+          ForwardNeuralNetwork.cpp \
+          DataPreprocessing.cpp
 
-# Compilation rules
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $<
+# Construct the list of object files in obj/ matching each .cpp in src/
+OBJECTS = $(patsubst %.cpp, $(OBJDIR)/%.o, $(SOURCES))
 
-# Clean rule to remove object files and executable
+# Default rule: build the executable
+all: $(TARGET)
+
+# Link step: create the final binary from object files
+$(TARGET): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $(BINDIR)/$(TARGET) $(OBJECTS)
+
+# Compilation step: .cpp -> .o
+# $< is the source file, $@ is the target .o file
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean up generated files
 clean:
-	rm -f *.o neural_network
+	rm -f $(OBJDIR)/*.o $(BINDIR)/$(TARGET)

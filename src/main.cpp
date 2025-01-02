@@ -1,8 +1,8 @@
-#include "DataPreprocessing.h" // Include your header file
-#include "ForwardNeuralNetwork.h"
-#include "ActivationFunction.h"
-#include <sciplot/sciplot.hpp>
-#include <iostream>           // For printing output
+#include "../include/DataPreprocessing.h"/ Include your header file
+#include "../include/ForwardNeuralNetwork.h"
+#include "../include/ActivationFunction.h"
+#include <sciplot/sciplot.hpp> //don't worry about red squiggles
+#include <iostream>
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
@@ -12,7 +12,7 @@
 
 int main() {
     // Specify the path to your CSV file
-    string file_path = "./insurance.csv";
+    string file_path = "./trainingData/insurance.csv";
 
     // Use the readCSV function to read the file
     vector<vector<string> > data = DataPreprocessor::readCSV(file_path);
