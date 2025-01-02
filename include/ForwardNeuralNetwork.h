@@ -83,7 +83,7 @@ public:
 
     vector<double> flatten(const vector<vector<double> > &list);
 
-    vector<double> predict(const vector<vector<double> > &inputs,const vector<vector<double> > &targets);
+    vector<double> predict(const vector<vector<double> > &inputs);
 
      void resetGradients();
 

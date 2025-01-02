@@ -1,6 +1,6 @@
 # Compiler and flags
 CXX      = clang++
-CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic \
+CXXFLAGS = -std=c++17 -O2 -g -pedantic \
            -I./include -I./sciplot
 
 # Directories

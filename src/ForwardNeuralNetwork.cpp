@@ -1,4 +1,4 @@
-#include "ForwardNeuralNetwork.h"
+#include "../include/ForwardNeuralNetwork.h"
 
 
 // Constructor
@@ -54,13 +54,13 @@ void ForwardNeuralNetwork::initializeWeights() {
            dBiasOutput.resize(outputSize, 0.0);
 
            // Optional: Verify initialization
-           assert(dWeightsInputHidden.size() == hiddenSize && "dWeightsInputHidden size mismatch.");
+           assert((int)dWeightsInputHidden.size() == hiddenSize && "dWeightsInputHidden size mismatch.");
            for(const auto &row : dWeightsInputHidden)
-               assert(row.size() == inputSize && "dWeightsInputHidden row size mismatch.");
+               assert((int)row.size() == inputSize && "dWeightsInputHidden row size mismatch.");
 
-           assert(dWeightsHiddenOutput.size() == outputSize && "dWeightsHiddenOutput size mismatch.");
+           assert((int)dWeightsHiddenOutput.size() == outputSize && "dWeightsHiddenOutput size mismatch.");
            for(const auto &row : dWeightsHiddenOutput)
-               assert(row.size() == hiddenSize && "dWeightsHiddenOutput row size mismatch.");
+               assert((int)row.size() == hiddenSize && "dWeightsHiddenOutput row size mismatch.");
 
 }
 
@@ -175,7 +175,7 @@ double ForwardNeuralNetwork::computeMAE(const vector<double> &predictions, const
     return mae / predictions.size();
 }
 
-vector<double> ForwardNeuralNetwork::predict(const vector<vector<double> > &inputs,const vector<vector<double> > &targets) {
+vector<double> ForwardNeuralNetwork::predict(const vector<vector<double> > &inputs) {
     vector<double> predictions;
     for(const auto &input : inputs) {
         vector<double> prediction = forward(input);
@@ -269,8 +269,8 @@ void ForwardNeuralNetwork::train(const vector<vector<double> > &trainInputs,
         vector<double> flattenedTestTargets = flatten(testTargets);
         vector<double> flattenTrainTargets = flatten(trainTargets);
 
-        vector<double> testPredictions = predict(testInputs, testTargets);
-        vector<double> trainPredictions = predict(trainInputs, trainTargets);
+        vector<double> testPredictions = predict(testInputs);
+        vector<double> trainPredictions = predict(trainInputs);
 
         double trainMAE = computeMAE(trainPredictions, flattenTrainTargets);
         double testMAE = computeMAE(testPredictions, flattenedTestTargets);

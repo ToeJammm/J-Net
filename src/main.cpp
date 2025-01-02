@@ -1,26 +1,23 @@
-#include "../include/DataPreprocessing.h"/ Include your header file
+#include "../include/DataPreprocessing.h"// Include your header file
 #include "../include/ForwardNeuralNetwork.h"
 #include "../include/ActivationFunction.h"
 #include <sciplot/sciplot.hpp> //don't worry about red squiggles
-#include <iostream>
-#include <algorithm>
-#include <cctype>
 #include <cstdio>
 #include <string>
-#include <vector>
-#include <memory>
 
 int main() {
-    // Specify the path to your CSV file
-    string file_path = "./trainingData/insurance.csv";
 
-    // Use the readCSV function to read the file
-    vector<vector<string> > data = DataPreprocessor::readCSV(file_path);
+    vector<double> trainTargetsFlattened, testTargetsFlattened;
     vector<int> numerics, nonNumerics;
     vector<vector<double> > testSet, trainSet, convertedData;
     vector<string> labels;
     vector<double> testPredictions, trainPredictions;
-    int size = 0;
+
+    //path to your CSV file
+    string file_path = "./trainingData/insurance.csv";
+
+    // Use the readCSV function to read the file
+     vector<vector<string> > data = DataPreprocessor::readCSV(file_path);
 
     // Check if the data is empty (file not found or error)
     if (data.empty()) {
@@ -28,37 +25,37 @@ int main() {
         return 1; // Exit with an error code
     }
 
-    // Print a preview of the first 5 rows
+    //extract labels and get Index of all numerical columns
     cout << "Preview of the CSV data:\n" << endl;
     labels = DataPreprocessor::processAndClean(data); //cleans the csv (removes BOM and whitespace)
-    numerics = DataPreprocessor::getNumericIndex(data[1], nonNumerics);
+    numerics = DataPreprocessor::getNumericIndex(data[1], nonNumerics); //also gets non-numerical cols
 
 
     cout << "\nNumerical column Indexes" << endl;
-    for(int i = 0; i < numerics.size(); i++) {
+    for(int i = 0; i < (int)numerics.size(); i++) {
       cout << numerics[i] << " ";
     }
     cout << endl;
 
     cout << "\nnonNumerical column Indexes" << endl;
-    for(int i = 0; i < nonNumerics.size(); i++) {
+    for(int i = 0; i < (int)nonNumerics.size(); i++) {
       cout << nonNumerics[i] << " ";
     }
     cout << endl;
 
     DataPreprocessor::standardize(data, numerics); //standardize numerical data
 
-    DataPreprocessor::printHead(data, labels, 10, 12);
+    DataPreprocessor::printHead(data, labels, 10, 12); //print head
 
-    DataPreprocessor::oneHotEncode(data, nonNumerics, labels);
+    DataPreprocessor::oneHotEncode(data, nonNumerics, labels); //encode non-numericals
 
-    convertedData = DataPreprocessor::convertData<double>(data, "double");
+    convertedData = DataPreprocessor::convertData<double>(data, "double"); //convert all columns to doubles
 
-    DataPreprocessor::shuffleData(data);
+    DataPreprocessor::shuffleData(data); //shuffle to break order bias and improve generalization
 
     DataPreprocessor::printHead(data, labels, 5, 12);
 
-    DataPreprocessor::splitData(convertedData, 0.8, trainSet, testSet);
+    DataPreprocessor::splitData(convertedData, 0.8, trainSet, testSet); //split 80/20 training test
 
     cout << "\n Training set:\n";
     DataPreprocessor::printHead<double>(trainSet, labels, 5, 12);
@@ -71,7 +68,6 @@ int main() {
     cout << "Make sure Data looks good before moving on. Hit enter to continue";
     cin.get();
 
-    // Separate inputs and targets for training and testing
     // Assuming the last column is the target
     int numFeatures = trainSet[0].size() - 1;
 
@@ -106,18 +102,17 @@ int main() {
     cout << "Ready to instantiate and train the Neural Network. Hit enter to continue.";
     cin.get();
 
-    // Proceed to instantiate and train the neural network here...
     // Define network architecture
     int inputSize = numFeatures;      // Number of input features
     int hiddenSize = 6;              // Number of neurons in hidden layer (adjust as needed)
     int outputSize = 1;               // Single output neuron for binary classification
     double learningRate = 0.01;       // Learning rate (adjust as needed)
 
-    // Instantiate activation functions
+    // choose activation functions
     unique_ptr<ActivationFunction> hiddenActivation = make_unique<ReLU>();
     unique_ptr<ActivationFunction> outputActivation = make_unique<Sigmoid>();
 
-    // Instantiate the neural network
+    // construct the neural network
     ForwardNeuralNetwork nn(inputSize,
                              hiddenSize,
                              outputSize,
@@ -127,8 +122,9 @@ int main() {
 
     // Define training parameters
     int epochs = 100;                // Number of training epochs
-    int batchSize = 32;               // Mini-batch size
+    int batchSize = 32;               // batch size
 
+   //for graphing Mean Absolute Error, making sure test and train accuracy is consistant
     vector<double> totalTrainMAE, totalTestMAE;
 
     // Begin training
@@ -136,16 +132,17 @@ int main() {
     nn.train(trainInputs, trainTargets, testInputs, testTargets, epochs, batchSize, totalTrainMAE, totalTestMAE);
     cout << "Training completed." << endl;
 
-    // Pause before evaluationsx
+    // Pause before evaluations
         std::cout << "Ready to evaluate the Neural Network. Hit enter to continue.";
         std::cin.get();
 
         // Make predictions on the test set and training set
+        // for(const auto &input : testInputs) {
+        //     vector<double> prediction = nn.forward(input);
+        //     testPredictions.push_back(prediction[0]); // Assuming single output
+        // }
 
-        for(const auto &input : testInputs) {
-            vector<double> prediction = nn.forward(input);
-            testPredictions.push_back(prediction[0]); // Assuming single output
-        }
+        testPredictions = nn.predict(testInputs);
 
         for(const auto &input : trainInputs) {
             vector<double> prediction = nn.forward(input);
@@ -153,16 +150,10 @@ int main() {
         }
 
         // Extract actual targets for Mean Average Error
-        vector<double> testTargetsFlattened;
-        for(const auto &target : testTargets) {
-            testTargetsFlattened.push_back(target[0]); // Assuming single target
-        }
+        testTargetsFlattened = nn.flatten(testTargets);
 
-        vector<double> trainTargetsFlattened;
-        for(const auto &target : trainTargets) {
-            trainTargetsFlattened.push_back(target[0]);
-        }
 
+        trainTargetsFlattened = nn.flatten(trainTargets);
         // Compute evaluation metrics on the training set
         double trainMSE = nn.computeMSE(trainPredictions, trainTargetsFlattened);
         double trainRMSE = nn.computeRMSE(trainPredictions, trainTargetsFlattened);
@@ -196,13 +187,13 @@ int main() {
             // Create a 2D plot
            sciplot::Plot2D plot;
 
-            plot.size(2200, 600); // width = 1200px, height = 600px
+           plot.size(360, 200);
+
             // Plot the training MAE (red line)
             plot.drawCurve(x, totalTrainMAE).label("Train MAE").lineColor("red");
             // Plot the testing MAE (blue line)
             plot.drawCurve(x, totalTestMAE).label("Test MAE").lineColor("blue");
 
-            // Label axes and legend
             plot.xlabel("Epoch");
             plot.ylabel("MAE");
             plot.legend().atOutsideRight();           // place legend outside to the right
