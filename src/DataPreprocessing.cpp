@@ -279,4 +279,41 @@ namespace DataPreprocessor {
         }
     }
 
+
+    pair<vector<vector<double> >, vector<vector<double> > > prepareInputsAndTargets(
+        const vector<vector<double> > &dataset,
+        int targetIndex
+    ) {
+        {
+            vector<vector<double> > inputs;
+            vector<vector<double> > targets;
+
+            for (const auto &row : dataset) {
+                if (row.size() <= targetIndex) {
+                    throw invalid_argument("Row size is smaller than target index.");
+                }
+
+                vector<double> input;
+                vector<double> target;
+
+                // Reserve space for efficiency
+                input.reserve(row.size() - 1);
+                target.reserve(1); // Assuming single target column
+
+                for (size_t i = 0; i < row.size(); ++i) {
+                    if (i == static_cast<size_t>(targetIndex)) {
+                        target.push_back(row[i]);
+                    } else {
+                        input.push_back(row[i]);
+                    }
+                }
+
+                inputs.emplace_back(std::move(input));
+                targets.emplace_back(std::move(target));
+            }
+
+            return {std::move(inputs), std::move(targets)};
+        }
+
+    }
 }

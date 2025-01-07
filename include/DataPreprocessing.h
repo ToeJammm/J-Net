@@ -101,6 +101,11 @@ namespace DataPreprocessor {
         return converted_data;
     }
 
+    pair<vector<vector<double> >, vector<vector<double> > > prepareInputsAndTargets(
+        const vector<vector<double> > &dataset,
+        int targetIndex
+    );
+
     template<typename T>
     void shuffleData(vector<vector<T> >& data) {
 

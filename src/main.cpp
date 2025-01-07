@@ -12,6 +12,8 @@ int main() {
     vector<vector<double> > testSet, trainSet, convertedData;
     vector<string> labels;
     vector<double> testPredictions, trainPredictions;
+    string target;
+    int targetIndex = -1;
 
     //path to your CSV file
     string file_path = "./trainingData/insurance.csv";
@@ -65,30 +67,44 @@ int main() {
 
     cout << endl;
 
-    cout << "Make sure Data looks good before moving on. Hit enter to continue";
+    cout << "Make sure Data looks good before moving on. Hit enter to continue\n";
     cin.get();
 
-    // Assuming the last column is the target
     int numFeatures = trainSet[0].size() - 1;
 
+    while (targetIndex == -1) {
+        cout << "Choose training column: ";
+
+        for (const auto &cell : labels) {
+            cout << cell << " ";
+        }
+        cout << endl;
+
+        cin >> target;
+
+        bool found = false;
+        for (size_t i = 0; i < labels.size(); ++i) {
+            if (target == labels[i]) { // Using == for comparison
+                targetIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            std::cout << "Invalid column, try again" << std::endl;
+        }
+    }
+
+    // Prepare training data
     vector<vector<double> > trainInputs;
     vector<vector<double> > trainTargets;
+    tie(trainInputs, trainTargets) = DataPreprocessor::prepareInputsAndTargets(trainSet, targetIndex);
+
+    // Prepare testing data
     vector<vector<double> > testInputs;
     vector<vector<double> > testTargets;
-
-    for(auto &row : trainSet) {
-        vector<double> input(row.begin(), row.begin() + numFeatures);
-        vector<double> target(row.begin() + numFeatures, row.end());
-        trainInputs.push_back(input);
-        trainTargets.push_back(target);
-    }
-
-    for(auto &row : testSet) {
-        vector<double> input(row.begin(), row.begin() + numFeatures);
-        vector<double> target(row.begin() + numFeatures, row.end());
-        testInputs.push_back(input);
-        testTargets.push_back(target);
-    }
+    tie(testInputs, testTargets) = DataPreprocessor::prepareInputsAndTargets(testSet, targetIndex);
 
     // Display separated data
     cout << "\nSeparated Training Inputs and Targets." << endl;
@@ -106,11 +122,11 @@ int main() {
     int inputSize = numFeatures;      // Number of input features
     int hiddenSize = 6;              // Number of neurons in hidden layer (adjust as needed)
     int outputSize = 1;               // Single output neuron for binary classification
-    double learningRate = 0.01;       // Learning rate (adjust as needed)
+    double learningRate = 0.0005;       // Learning rate (adjust as needed)
 
     // choose activation functions
     unique_ptr<ActivationFunction> hiddenActivation = make_unique<ReLU>();
-    unique_ptr<ActivationFunction> outputActivation = make_unique<Sigmoid>();
+    unique_ptr<ActivationFunction> outputActivation = make_unique<Linear>();
 
     // construct the neural network
     ForwardNeuralNetwork nn(inputSize,
@@ -121,8 +137,8 @@ int main() {
                              std::move(outputActivation));
 
     // Define training parameters
-    int epochs = 100;                // Number of training epochs
-    int batchSize = 32;               // batch size
+    int epochs = 500;                // Number of training epochs
+    int batchSize = 50;               // batch size
 
    //for graphing Mean Absolute Error, making sure test and train accuracy is consistant
     vector<double> totalTrainMAE, totalTestMAE;
@@ -133,14 +149,8 @@ int main() {
     cout << "Training completed." << endl;
 
     // Pause before evaluations
-        std::cout << "Ready to evaluate the Neural Network. Hit enter to continue.";
+        std::cout << "Ready to evaluate the Neural Network. Hit enter to continue." << endl;
         std::cin.get();
-
-        // Make predictions on the test set and training set
-        // for(const auto &input : testInputs) {
-        //     vector<double> prediction = nn.forward(input);
-        //     testPredictions.push_back(prediction[0]); // Assuming single output
-        // }
 
         testPredictions = nn.predict(testInputs);
 
@@ -215,3 +225,6 @@ int main() {
 
     return 0;
 }
+
+
+//implement dimensionality reduction, LR decay, and regularization
