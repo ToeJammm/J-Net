@@ -122,7 +122,8 @@ int main() {
     int inputSize = numFeatures;      // Number of input features
     int hiddenSize = 6;              // Number of neurons in hidden layer (adjust as needed)
     int outputSize = 1;               // Single output neuron for binary classification
-    double learningRate = 0.0005;       // Learning rate (adjust as needed)
+    double learningRate = 0.01;       // Learning rate (adjust as needed)
+    double decayRate = 0.005; //try 0.001 and 0.002
 
     // choose activation functions
     unique_ptr<ActivationFunction> hiddenActivation = make_unique<ReLU>();
@@ -134,18 +135,19 @@ int main() {
                              outputSize,
                              learningRate,
                              std::move(hiddenActivation),
-                             std::move(outputActivation));
+                             std::move(outputActivation),
+                             decayRate);
 
     // Define training parameters
-    int epochs = 500;                // Number of training epochs
-    int batchSize = 50;               // batch size
+    int epochs = 800;                // Number of training epochs
+    int batchSize = 32;               // batch size
 
    //for graphing Mean Absolute Error, making sure test and train accuracy is consistant
     vector<double> totalTrainMAE, totalTestMAE;
 
     // Begin training
-    cout << "Starting training..." << endl;
-    nn.train(trainInputs, trainTargets, testInputs, testTargets, epochs, batchSize, totalTrainMAE, totalTestMAE);
+    cout << "Starting training..." << endl;                                                                  //enables LRDecay
+    nn.train(trainInputs, trainTargets, testInputs, testTargets, epochs, batchSize, totalTrainMAE, totalTestMAE, true);
     cout << "Training completed." << endl;
 
     // Pause before evaluations
@@ -228,3 +230,5 @@ int main() {
 
 
 //implement dimensionality reduction, LR decay, and regularization
+
+//LR decay first, then PCA, then regularization, then hyper-parameter tuning

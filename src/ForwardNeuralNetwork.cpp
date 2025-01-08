@@ -6,12 +6,15 @@
     ForwardNeuralNetwork::ForwardNeuralNetwork(int inputSize_,
                                                int hiddenSize_,
                                                int outputSize_,
-                                               double learningRate_,
+                                               double &learningRate_,
                                                unique_ptr<ActivationFunction> hiddenActivation,
-                                               unique_ptr<ActivationFunction> outputActivation)
+                                               unique_ptr<ActivationFunction> outputActivation,
+                                               double decayRate_)
         : inputSize(inputSize_), hiddenSize(hiddenSize_), outputSize(outputSize_),
-          learningRate(learningRate_), dis(-1.0, 1.0) // Initialize weights between -1 and 1
-    {
+          learningRate(learningRate_), dis(-1.0, 1.0), // Initialize weights between -1 and 1
+          initialLearningRate(learningRate_),
+          decayRate(decayRate_)
+          {
         // Initialize random number generator with random device
         random_device rd;
         gen = mt19937(rd());
@@ -202,7 +205,8 @@
                                     int epochs,
                                     int batchSize,
                                     vector<double> &totalTrainMAE,
-                                    vector<double> &totalTestMAE) {
+                                    vector<double> &totalTestMAE,
+                                    bool LRDecay) {
         assert(trainInputs.size() == trainTargets.size() && "Number of inputs and targets must match.");
 
         int dataSize = trainInputs.size();
@@ -215,6 +219,12 @@
         }
 
         for(int epoch = 1; epoch <= epochs; ++epoch) {
+
+            // --- Exponential LR decay calculation ---
+            // learningRate = initialLearningRate * exp(-decayRate * epoch);
+           if(LRDecay) learningRate = initialLearningRate * exp(-decayRate * epoch);
+           cout << "new learning rate: " << learningRate << endl;
+
             double totalLoss = 0.0;
 
             // Shuffle the data at the beginning of each epoch for better convergence

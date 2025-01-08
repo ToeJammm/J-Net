@@ -37,6 +37,9 @@ private:
 
     // Learning rate
     double learningRate;
+    double initialLearningRate;  // Store the initial LR
+    double decayRate;
+
 
     // Random number generator for weight initialization
     mt19937 gen;
@@ -53,9 +56,10 @@ public:
     ForwardNeuralNetwork(int inputSize,
                          int hiddenSize,
                          int outputSize,
-                         double learningRate,
+                         double &learningRate,
                          unique_ptr<ActivationFunction> hiddenActivation,
-                         unique_ptr<ActivationFunction> outputActivation);
+                         unique_ptr<ActivationFunction> outputActivation,
+                         double decayRate);
 
     // Initialize weights and biases with random values
     void initializeWeights();
@@ -79,7 +83,8 @@ public:
                 int epochs,
                 int batchSize,
                 vector<double> &totalTrainMAE,
-                vector<double> &totalTestMAE);
+                vector<double> &totalTestMAE,
+                bool LRDecay);
 
     vector<double> flatten(const vector<vector<double> > &list);
 
