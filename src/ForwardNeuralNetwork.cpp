@@ -223,7 +223,6 @@
             // --- Exponential LR decay calculation ---
             // learningRate = initialLearningRate * exp(-decayRate * epoch);
            if(LRDecay) learningRate = initialLearningRate * exp(-decayRate * epoch);
-           cout << "new learning rate: " << learningRate << endl;
 
             double totalLoss = 0.0;
 
@@ -291,7 +290,7 @@
             totalTestMAE.push_back(testMAE);
 
             // Display progress
-            if(epoch % 100 == 0 || epoch == 1) { // Adjust frequency as needed
+            if(epoch % 50 == 0 || epoch == 1) { // Adjust frequency as needed
                 cout << "Epoch " << epoch << " - Loss: " << averageLoss << endl;
             }
         }

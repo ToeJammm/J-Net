@@ -21,11 +21,19 @@ namespace DataPreprocessor {
     // Function to read CSV data and store it
     vector<vector<string> > readCSV(const string& file_path);
 
+    void removeColumns(
+        vector<string>& labels,
+        const vector<string>& colsToRemove,
+        vector<vector<string> >& data
+    );
+
     // A simple trim function to remove leading/trailing whitespace
     static inline string trim(const string &s);
 
     // Main function to remove BOM, trim cells, and print the "head" of the data
     vector<string> processAndClean(vector<vector<string> >& data);
+
+    string truncateString(const string& str, int max_width);
 
     // Declares the non-template function for strings
     void printHead(const vector<vector<string> >& data, const vector<string>& labels, size_t num_rows, int col_width);

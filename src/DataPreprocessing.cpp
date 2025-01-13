@@ -4,33 +4,111 @@
 
 namespace DataPreprocessor {
 
-    vector<vector<string> > readCSV(const string& file_path) { //reads in a CSV file, consists of cells that make up rows
-        vector<vector<string> > data;
-        ifstream file(file_path);
+    vector<vector<string> > readCSV(const string& file_path) {
+           vector<vector<string> > data;
+           ifstream file(file_path);
 
-        if (!file.is_open()) {
-            cerr << "Error: Could not open file " << file_path << endl;
-            return data;
-        }
+           if (!file.is_open()) {
+               cerr << "Error: Could not open file " << file_path << endl;
+               return data;
+           }
 
-        string line;
-        while (getline(file, line)) {
-            vector<string> row;
-            stringstream line_stream(line);
-            string cell;
+           string line;
+           while (getline(file, line)) {
+               vector<string> row;
+               string cell;
+               bool inQuotes = false;
+               bool cellStarted = false;
 
-            while (getline(line_stream, cell, ',')) {
-                row.push_back(cell);
-            }
+               for (size_t i = 0; i < line.length(); ++i) {
+                   char c = line[i];
 
-            if (!row.empty()) {
-                data.push_back(row);
-            }
-        }
+                   if (inQuotes) {
+                       if (c == '"') {
+                           // Check if this is an escaped quote
+                           if (i + 1 < line.length() && line[i + 1] == '"') {
+                               cell += '"'; // Add a single quote
+                               ++i; // Skip the next quote
+                           } else {
+                               inQuotes = false; // End of quoted field
+                           }
+                       } else {
+                           cell += c;
+                       }
+                   } else {
+                       if (c == '"') {
+                           inQuotes = true;
+                           if (cell.empty()) {
+                               // Starting a quoted field
+                               cellStarted = true;
+                           } else {
+                               // Quote character in the middle of a field
+                               cell += c;
+                           }
+                       }
+                       else if (c == ',') {
+                           // End of cell
+                           row.push_back(cell);
+                           cell.clear();
+                           cellStarted = false;
+                       }
+                       else {
+                           cell += c;
+                       }
+                   }
+               }
 
-        file.close();
-        return data;
-    }
+               // Add the last cell
+               row.push_back(cell);
+               data.push_back(row);
+           }
+
+           file.close();
+           return data;
+       }
+
+       // Function to remove specified columns from data and labels
+         void removeColumns(
+             vector<string>& labels,
+             const vector<string>& colsToRemove,
+             vector<vector<string> >& data
+         ) {
+             vector<int> indicesToRemove;
+
+             // Step 1: Find indices of columns to remove
+             for (const auto& col : colsToRemove) {
+                 auto it = std::find(labels.begin(), labels.end(), col);
+                 if (it != labels.end()) {
+                     int index = std::distance(labels.begin(), it);
+                     indicesToRemove.push_back(index);
+                 } else {
+                     cerr << "Warning: Column \"" << col << "\" not found in labels.\n";
+                 }
+             }
+
+             // Step 2: Sort indices in descending order to prevent shifting issues
+             sort(indicesToRemove.begin(), indicesToRemove.end(), std::greater<int>());
+
+             // Step 3: Remove columns from labels and each row in data
+             for (int idx : indicesToRemove) {
+                 if (idx >= 0 && idx < labels.size()) {
+                     // Remove from labels
+                     labels.erase(labels.begin() + idx);
+
+                     // Remove from each row in data
+                     for (auto& row : data) {
+                         if (idx >= 0 && idx < row.size()) {
+                             row.erase(row.begin() + idx);
+                         } else {
+                             cerr << "Warning: Row size is smaller than expected.\n";
+                         }
+                     }
+                 } else {
+                     cerr << "Error: Invalid index " << idx << " for removal.\n";
+                 }
+             }
+         }
+
 
 
     // A simple trim function to remove leading/trailing whitespace
@@ -99,24 +177,49 @@ namespace DataPreprocessor {
         return labels;
     }
 
-    void printHead(const vector<vector<string> >& data, const vector<string>& labels, size_t num_rows, int col_width) {
-        // 1. Print the labels
-        for (const auto& label : labels) {
-            printf("%-*s", col_width, label.c_str());
+    // Helper function to truncate strings without appending a dash
+    string truncateString(const string& str, int max_width) {
+        if (max_width <= 0) {
+            // If max_width is 0 or negative, return an empty string
+            return "";
         }
-        printf("\n");
 
-        // 2. Determine how many rows to print
-        size_t rows_to_print = min(num_rows, data.size());
-
-        // 3. Print the data rows
-        for (size_t i = 0; i < rows_to_print; ++i) {
-            for (size_t j = 0; j < data[i].size(); ++j) {
-                printf("%-*s", col_width, data[i][j].c_str());
-            }
-            printf("\n");
+        if (str.length() >= static_cast<size_t>(max_width)) {
+            // Truncate the string to max_width - 1 characters
+            return str.substr(0, max_width - 1);
+        } else {
+            return str;
         }
     }
+
+
+    // Function to print headers and data with truncation
+       void printHead(const vector<vector<string> >& data, const vector<string>& labels, size_t num_rows, int col_width) {
+           if (col_width < 1) {
+               cerr << "Column width must be at least 1.\n";
+               return;
+           }
+
+           // 1. Print the labels with truncation if necessary
+           for (const auto& label : labels) {
+               string display_label = truncateString(label, col_width);
+               printf("%-*s", col_width, display_label.c_str());
+           }
+           printf("\n");
+
+           // 2. Determine how many rows to print
+           size_t rows_to_print = min(num_rows, data.size());
+
+           // 3. Print the data rows with truncation if necessary
+           for (size_t i = 0; i < rows_to_print; ++i) {
+               for (size_t j = 0; j < data[i].size(); ++j) {
+                   string display_data = truncateString(data[i][j], col_width);
+                   printf("%-*s", col_width, display_data.c_str());
+               }
+               printf("\n");
+           }
+       }
+
 
     bool isNumeric(const string& str) {
         if (str.empty()) return false;
